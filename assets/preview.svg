@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" width="760" height="300" role="img" aria-label="Tres versiones del widget: Attego oscuro con barra, Attego claro con semicírculo y clásico rojo sin gráfica" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+  <rect width="760" height="300" fill="#17171a"/>
+
+  <!-- Attego oscuro · barra -->
+  <g transform="translate(40 45) scale(1.2353)">
+    <rect width="170" height="170" rx="22" fill="#0f0f11"/>
+    <text x="12" y="22" font-size="11" font-weight="500" fill="#e6e7e8">Amigo Sin Límite 200</text>
+    <text x="158" y="21" font-size="8" font-weight="500" fill="#9d7d5d" text-anchor="end">TELCEL</text>
+    <text x="85" y="78" text-anchor="middle"><tspan font-size="34" font-weight="700" fill="#e6e7e8">1.6</tspan><tspan font-size="13" font-weight="500" fill="#99999b" dx="4">GB</tspan></text>
+    <text x="85" y="93" font-size="10" fill="#99999b" text-anchor="middle">disponibles de 7.0 GB</text>
+    <rect x="29" y="100" width="112" height="6" fill="#99999b" fill-opacity="0.28"/>
+    <rect x="29" y="100" width="86" height="6" fill="#9d7d5d"/>
+    <text x="85" y="117" font-size="9" fill="#99999b" text-anchor="middle">77% utilizado</text>
+    <text x="12" y="137" font-size="9" fill="#99999b">Vence 24 oct · en 5 días</text>
+    <text x="12" y="149" font-size="8" fill="#99999b">Dato de Telcel · 18/10 10:26</text>
+    <text x="12" y="159" font-size="8" fill="#99999b">Revisado · 18/10 10:29</text>
+  </g>
+
+  <!-- Attego claro · semicírculo -->
+  <g transform="translate(275 45) scale(1.2353)">
+    <rect width="170" height="170" rx="22" fill="#e6e7e8"/>
+    <text x="12" y="22" font-size="11" font-weight="500" fill="#0f0f11">Amigo Sin Límite 200</text>
+    <text x="158" y="21" font-size="8" font-weight="500" fill="#0f0f11" text-anchor="end">TELCEL</text>
+    <path d="M32 96 A53 53 0 0 1 138 96" fill="none" stroke="#545456" stroke-opacity="0.28" stroke-width="5"/>
+    <path d="M32 96 A53 53 0 0 1 138 96" fill="none" stroke="#9d7d5d" stroke-width="5" stroke-dasharray="128.2 166.5"/>
+    <text x="85" y="104" text-anchor="middle"><tspan font-size="30" font-weight="700" fill="#0f0f11">1.6</tspan><tspan font-size="13" font-weight="500" fill="#545456" dx="4">GB</tspan></text>
+    <text x="85" y="118" font-size="10" fill="#545456" text-anchor="middle">disponibles de 7.0 GB</text>
+    <text x="85" y="130" font-size="9" fill="#545456" text-anchor="middle">77% utilizado</text>
+    <text x="12" y="142" font-size="9" fill="#545456">Vence 24 oct · en 5 días</text>
+    <text x="12" y="152" font-size="8" fill="#545456">Dato de Telcel · 18/10 10:26</text>
+    <text x="12" y="161" font-size="8" fill="#545456">Revisado · 18/10 10:29</text>
+  </g>
+
+  <!-- Clásico rojo · sin gráfica -->
+  <g transform="translate(510 45) scale(1.2353)">
+    <rect width="170" height="170" rx="22" fill="#101012"/>
+    <text x="12" y="22" font-size="11" font-weight="500" fill="#ffffff">Amigo Sin Límite 200</text>
+    <text x="158" y="21" font-size="8" font-weight="500" fill="#ff453a" text-anchor="end">TELCEL</text>
+    <text x="85" y="90" text-anchor="middle"><tspan font-size="40" font-weight="700" fill="#ffffff">1.6</tspan><tspan font-size="13" font-weight="500" fill="#929298" dx="4">GB</tspan></text>
+    <text x="85" y="106" font-size="10" fill="#929298" text-anchor="middle">disponibles de 7.0 GB</text>
+    <text x="12" y="137" font-size="9" fill="#929298">Vence 24 oct · en 5 días</text>
+    <text x="12" y="149" font-size="8" fill="#929298">Dato de Telcel · 18/10 10:26</text>
+    <text x="12" y="159" font-size="8" fill="#929298">Revisado · 18/10 10:29</text>
+  </g>
+
+  <g font-size="11" font-weight="500" letter-spacing="1.76" fill="#e6e7e8" fill-opacity="0.64" text-anchor="middle">
+    <text x="145" y="282">ATTEGO OSCURO</text>
+    <text x="380" y="282">ATTEGO CLARO</text>
+    <text x="615" y="282">CLÁSICO ROJO</text>
+  </g>
+</svg>

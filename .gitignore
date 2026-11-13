@@ -1,0 +1,5 @@
+.claude/
+node_modules/
+plan.md
+.DS_Store
+*.log
