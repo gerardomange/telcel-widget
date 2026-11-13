@@ -8,7 +8,7 @@
 // de Gabriel Soto (https://github.com/gabri3l0/mobile-data-tracker).
 
 const RUN_AT = new Date();
-const WIDGET_VERSION = "1.0.0";
+const WIDGET_VERSION = "1.1.0";
 
 // Personaliza aquí, o genera este bloque en la página del generador.
 // Tu número y contraseña NO van aquí: se piden al ejecutar y se guardan en el Keychain.
@@ -21,7 +21,14 @@ const SETTINGS = {
   chartStyle: "bar", // bar, arc (semicírculo) o none.
   barCorners: "square", // square (recto, Attego) o round.
   font: "helvetica", // helvetica (Attego) o system (San Francisco).
-  showPlanName: true, // false muestra solo el rótulo TELCEL.
+  showPlanName: true, // Nombre del plan, arriba.
+  showCarrier: true, // Rótulo TELCEL, arriba.
+  showCaption: true, // "disponibles de 7.0 GB".
+  showPercent: true, // "77% utilizado".
+  showExpiration: true, // "Vence 24 oct · en 5 días".
+  showReadingTime: true, // "Dato de Telcel · fecha y hora".
+  showRunTime: true, // "Revisado · fecha y hora".
+  showNotices: true, // Avisos: "No se pudo actualizar" y "Nueva versión disponible".
   backgroundImageUrl: "", // Opcional: URL https de una imagen de fondo.
   backgroundOverlayOpacity: 0.55, // 0 a 1. Capa del color de fondo sobre la imagen.
   cacheMinutes: 30, // Minutos que se reutiliza la última lectura.
@@ -82,6 +89,14 @@ function labelColor() {
   return contrast(COLORS.accent, COLORS.background) >= 4.5 ? COLORS.accent : COLORS.text;
 }
 
+// Cada elemento se muestra salvo que su opción sea false.
+const SHOW_KEYS = { plan: "showPlanName", carrier: "showCarrier", caption: "showCaption", percent: "showPercent",
+  expires: "showExpiration", reading: "showReadingTime", run: "showRunTime", notices: "showNotices" };
+
+function shows(name) {
+  return SETTINGS[SHOW_KEYS[name]] !== false;
+}
+
 function chartStyle() {
   return ["bar", "arc", "none"].includes(SETTINGS.chartStyle) ? SETTINGS.chartStyle : "bar";
 }
@@ -126,7 +141,7 @@ function generatorURL() {
     bg: COLORS.background, primary: COLORS.text, secondary: COLORS.muted, accent: COLORS.accent,
     chart: chartStyle(), corners: SETTINGS.barCorners === "round" ? "round" : "square",
     font: SETTINGS.font === "system" ? "system" : "helvetica",
-    plan: String(SETTINGS.showPlanName !== false),
+    show: Object.keys(SHOW_KEYS).filter(shows).join(","),
     image: imageURL(), overlay: String(overlayOpacity()),
   };
   // La apariencia viaja en el fragmento (#), que no se envía al servidor. Nunca incluye datos de la cuenta.
@@ -888,15 +903,15 @@ function statusNotice(updateFailed, updateAvailable) {
 }
 
 function addFooter(widget, data, updateFailed, updateAvailable) {
-  const notice = statusNotice(updateFailed, updateAvailable);
-  widget.addSpacer(3);
-  if (notice) {
-    addText(widget, notice, font("medium", 8), COLORS.text);
-  } else if (data) {
-    addText(widget, `Dato de Telcel · ${formatReadingTime(data.last_updated)}`, font("regular", 8), COLORS.muted);
-  }
-  widget.addSpacer(1);
-  addText(widget, `Revisado · ${formatRunTime(RUN_AT)}`, font("regular", 8), COLORS.muted);
+  const lines = [];
+  const notice = shows("notices") ? statusNotice(updateFailed, updateAvailable) : "";
+  if (notice) lines.push([notice, "medium", COLORS.text]);
+  else if (data && shows("reading")) lines.push([`Dato de Telcel · ${formatReadingTime(data.last_updated)}`, "regular", COLORS.muted]);
+  if (shows("run")) lines.push([`Revisado · ${formatRunTime(RUN_AT)}`, "regular", COLORS.muted]);
+  lines.forEach(([value, weight, color], index) => {
+    widget.addSpacer(index ? 1 : 3);
+    addText(widget, value, font(weight, 8), color);
+  });
 }
 
 function createWidget({ data, updateFailed = false, setupRequired = false, updateAvailable = false, backgroundImage = null }) {
@@ -908,17 +923,20 @@ function createWidget({ data, updateFailed = false, setupRequired = false, updat
   // Pide a iOS la siguiente actualización cuando venza la lectura guardada. iOS decide el momento real.
   widget.refreshAfterDate = new Date(Date.now() + Math.max(5, Number(SETTINGS.cacheMinutes) || 30) * 60000);
 
-  const header = widget.addStack();
-  header.centerAlignContent();
-  if (SETTINGS.showPlanName !== false) {
-    const title = header.addStack();
-    title.size = new Size(92, 14);
-    addText(title, data && data.plan_name ? data.plan_name : "Consumo", font("medium", 11), COLORS.text);
-    title.addSpacer();
-    header.addSpacer();
-    addText(header, CARRIER_NAME, font("medium", 8), labelColor());
-  } else {
-    addText(header, CARRIER_NAME, font("medium", 10), labelColor());
+  // Encabezado: plan y rótulo. Si se ocultan los dos, no ocupa espacio y el centro queda solo.
+  if (shows("plan") || shows("carrier")) {
+    const header = widget.addStack();
+    header.centerAlignContent();
+    if (shows("plan")) {
+      const title = header.addStack();
+      title.size = new Size(shows("carrier") ? 92 : 130, 14);
+      addText(title, data && data.plan_name ? data.plan_name : "Consumo", font("medium", 11), COLORS.text);
+      title.addSpacer();
+      header.addSpacer();
+      if (shows("carrier")) addText(header, CARRIER_NAME, font("medium", 8), labelColor());
+    } else {
+      addText(header, CARRIER_NAME, font("medium", 10), labelColor());
+    }
   }
 
   if (!data) {
@@ -961,10 +979,12 @@ function createWidget({ data, updateFailed = false, setupRequired = false, updat
   if (style === "arc") reading.addSpacer();
   body.addSpacer();
 
-  const caption = widget.addStack();
-  caption.addSpacer();
-  addText(caption, `disponibles de ${formatAmount(data.total_data, data.total_unit)} ${data.total_unit}`, font("regular", 10), COLORS.muted);
-  caption.addSpacer();
+  if (shows("caption")) {
+    const caption = widget.addStack();
+    caption.addSpacer();
+    addText(caption, `disponibles de ${formatAmount(data.total_data, data.total_unit)} ${data.total_unit}`, font("regular", 10), COLORS.muted);
+    caption.addSpacer();
+  }
   if (style === "bar") {
     widget.addSpacer(5);
     const bar = widget.addStack();
@@ -973,7 +993,7 @@ function createWidget({ data, updateFailed = false, setupRequired = false, updat
     progress.imageSize = new Size(BAR_WIDTH, BAR_HEIGHT);
     bar.addSpacer();
   }
-  if (style !== "none") {
+  if (style !== "none" && shows("percent")) {
     widget.addSpacer(3);
     const used = widget.addStack();
     used.addSpacer();
@@ -981,7 +1001,7 @@ function createWidget({ data, updateFailed = false, setupRequired = false, updat
     used.addSpacer();
   }
   widget.addSpacer();
-  addText(widget, expirationText(data), font("regular", 9), COLORS.muted);
+  if (shows("expires")) addText(widget, expirationText(data), font("regular", 9), COLORS.muted);
   addFooter(widget, data, updateFailed, updateAvailable);
   return widget;
 }

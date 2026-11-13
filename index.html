@@ -115,6 +115,7 @@
   input[type="range"] { width: 100%; accent-color: var(--accent); min-height: 44px; }
   .check { display: flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-size: 13px; }
   .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
   .note { margin: 8px 0 0; }
   .warn { margin: 8px 0 0; color: var(--ink); border-left: 0; }
   .warn::before { content: "Aviso · "; color: var(--accent); font-weight: 500; }
@@ -142,7 +143,7 @@
     .hero { padding: 32px 0; }
     .steps { padding: 32px 0; }
   }
-  @media (max-width: 420px) { .grid-2 { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 420px) { .grid-2, .checks { grid-template-columns: minmax(0, 1fr); } }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -216,7 +217,26 @@
             </div>
           </div>
         </div>
-        <label class="check field"><input type="checkbox" id="showPlanName"> Mostrar el nombre del plan</label>
+      </div>
+
+      <div class="panel">
+        <h2>Qué mostrar</h2>
+        <p class="small">Deja solo lo que te sirve. Si quitas todo, queda la cifra sola y centrada.</p>
+        <div class="field">
+          <span class="label" id="layout-label">Diseño rápido</span>
+          <div class="seg" id="layouts" role="group" aria-labelledby="layout-label"></div>
+        </div>
+        <div class="field checks" id="shows">
+          <label class="check"><input type="checkbox" data-show="showPlanName"> Nombre del plan</label>
+          <label class="check"><input type="checkbox" data-show="showCarrier"> Rótulo TELCEL</label>
+          <label class="check"><input type="checkbox" data-show="showCaption"> “disponibles de 7.0 GB”</label>
+          <label class="check"><input type="checkbox" data-show="showPercent"> “77% utilizado”</label>
+          <label class="check"><input type="checkbox" data-show="showExpiration"> Fecha de vencimiento</label>
+          <label class="check"><input type="checkbox" data-show="showReadingTime"> Hora del dato de Telcel</label>
+          <label class="check"><input type="checkbox" data-show="showRunTime"> Hora de revisión</label>
+          <label class="check"><input type="checkbox" data-show="showNotices"> Avisos de fallo y de nueva versión</label>
+        </div>
+        <p class="small note">La gráfica se elige arriba, en Apariencia. Con los avisos apagados, el widget no te dirá si dejó de actualizarse.</p>
       </div>
 
       <div class="panel">
@@ -320,18 +340,22 @@
     box.replaceChildren();
 
     const hasData = state !== "setup" && state !== "error";
-    const head = el("div", "w-head");
-    if (s.showPlanName) {
-      const plan = el("div", "w-plan", hasData ? SAMPLE.plan : "Consumo");
-      plan.style.color = text;
-      head.append(plan);
+    if (s.showPlanName || s.showCarrier) {
+      const head = el("div", "w-head");
+      if (s.showPlanName) {
+        const plan = el("div", "w-plan", hasData ? SAMPLE.plan : "Consumo");
+        plan.style.color = text;
+        head.append(plan);
+      }
+      if (s.showCarrier) {
+        const carrier = el("div", "w-carrier" + (s.showPlanName ? "" : " big"), "TELCEL");
+        carrier.style.color = label;
+        head.append(carrier);
+      }
+      box.append(head);
     }
-    const carrier = el("div", "w-carrier" + (s.showPlanName ? "" : " big"), "TELCEL");
-    carrier.style.color = label;
-    head.append(carrier);
-    box.append(head);
 
-    const notice = state === "update" ? "Nueva versión disponible" : state === "stale" ? "No se pudo actualizar" : state === "error" ? "No se pudo actualizar" : "";
+    const notice = !s.showNotices ? "" : state === "update" ? "Nueva versión disponible" : state === "stale" ? "No se pudo actualizar" : state === "error" ? "No se pudo actualizar" : "";
 
     if (!hasData) {
       const empty = el("div", "w-empty");
@@ -362,9 +386,11 @@
       } else {
         mid.append(reading);
       }
-      const caption = el("div", "w-caption", `disponibles de ${SAMPLE.total}`);
-      caption.style.color = muted;
-      mid.append(caption);
+      if (s.showCaption) {
+        const caption = el("div", "w-caption", `disponibles de ${SAMPLE.total}`);
+        caption.style.color = muted;
+        mid.append(caption);
+      }
       if (s.chartStyle === "bar") {
         const bar = el("div", "w-bar");
         bar.style.background = track;
@@ -376,29 +402,33 @@
         bar.append(fill);
         mid.append(bar);
       }
-      if (s.chartStyle !== "none") {
+      if (s.chartStyle !== "none" && s.showPercent) {
         const used = el("div", "w-used", `${SAMPLE.used}% utilizado`);
         used.style.color = muted;
         mid.append(used);
       }
       box.append(mid);
-      const expires = el("div", "w-line", SAMPLE.expires);
-      expires.style.color = muted;
-      box.append(expires);
+      if (s.showExpiration) {
+        const expires = el("div", "w-line", SAMPLE.expires);
+        expires.style.color = muted;
+        box.append(expires);
+      }
     }
 
     if (notice && state !== "setup") {
       const line = el("div", "w-foot notice", notice);
       line.style.color = text;
       box.append(line);
-    } else if (hasData) {
+    } else if (hasData && s.showReadingTime) {
       const line = el("div", "w-foot", `Dato de Telcel · ${SAMPLE.reading}`);
       line.style.color = muted;
       box.append(line);
     }
-    const run = el("div", "w-foot", `Revisado · ${SAMPLE.run}`);
-    run.style.color = muted;
-    box.append(run);
+    if (s.showRunTime) {
+      const run = el("div", "w-foot", `Revisado · ${SAMPLE.run}`);
+      run.style.color = muted;
+      box.append(run);
+    }
   }
 
   // ----- Formulario -----
@@ -416,7 +446,11 @@
     for (const button of $("themes").querySelectorAll("button")) {
       button.setAttribute("aria-pressed", String(button.dataset.value === theme));
     }
-    $("showPlanName").checked = settings.showPlanName;
+    for (const box of document.querySelectorAll("#shows input")) box.checked = settings[box.dataset.show];
+    const layout = G.layoutOf(settings);
+    for (const button of $("layouts").querySelectorAll("button")) {
+      button.setAttribute("aria-pressed", String(button.dataset.value === layout));
+    }
     if (document.activeElement !== $("backgroundImageUrl")) $("backgroundImageUrl").value = settings.backgroundImageUrl;
     $("backgroundOverlayOpacity").value = settings.backgroundOverlayOpacity;
     $("overlay-value").textContent = Math.round(settings.backgroundOverlayOpacity * 100) + "%";
@@ -466,7 +500,16 @@
       if (button) update({ [group.dataset.setting]: button.dataset.value });
     });
   }
-  $("showPlanName").addEventListener("change", event => update({ showPlanName: event.target.checked }));
+  for (const id of Object.keys(G.LAYOUTS)) {
+    const button = el("button", "", G.LAYOUTS[id].label);
+    button.type = "button";
+    button.dataset.value = id;
+    button.addEventListener("click", () => update(G.layoutValues(id)));
+    $("layouts").append(button);
+  }
+  $("shows").addEventListener("change", event => {
+    if (event.target.dataset.show) update({ [event.target.dataset.show]: event.target.checked });
+  });
   $("backgroundImageUrl").addEventListener("input", event => update({ backgroundImageUrl: event.target.value }));
   $("backgroundOverlayOpacity").addEventListener("input", event => update({ backgroundOverlayOpacity: event.target.value }));
   $("cacheMinutes").addEventListener("change", event => update({ cacheMinutes: event.target.value }));

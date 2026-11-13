@@ -63,7 +63,14 @@ También puedes editar a mano el bloque `SETTINGS` al inicio del script:
 | `chartStyle` | `bar`, `arc` o `none` | `bar` |
 | `barCorners` | `square` o `round` | `square` |
 | `font` | `helvetica` o `system` | `helvetica` |
-| `showPlanName` | `true` o `false` | `true` |
+| `showPlanName` | Nombre del plan, arriba | `true` |
+| `showCarrier` | Rótulo TELCEL, arriba | `true` |
+| `showCaption` | "disponibles de 7.0 GB" | `true` |
+| `showPercent` | "77% utilizado" | `true` |
+| `showExpiration` | Fecha de vencimiento y días que faltan | `true` |
+| `showReadingTime` | Hora del dato de Telcel | `true` |
+| `showRunTime` | Hora en que el widget lo revisó | `true` |
+| `showNotices` | Avisos de fallo y de nueva versión | `true` |
 | `backgroundImageUrl` | Enlace `https` de una imagen, o vacío | vacío |
 | `backgroundOverlayOpacity` | De `0` a `1`: capa del color de fondo sobre la imagen | `0.55` |
 | `cacheMinutes` | Minutos entre consultas a Telcel | `30` |
@@ -71,6 +78,18 @@ También puedes editar a mano el bloque `SETTINGS` al inicio del script:
 | `debug` | `true` escribe un registro en la consola de Scriptable | `false` |
 | `useSampleData` | `true` muestra datos de ejemplo sin consultar a Telcel | `false` |
 | `sampleState` | `success`, `stale`, `error`, `setup`, `update` | `success` |
+
+### Qué mostrar
+
+Cada texto del widget se puede ocultar con su opción `show…`. El generador trae tres diseños rápidos:
+
+| Diseño | Qué deja |
+| --- | --- |
+| Completo | Todo. |
+| Limpio | La cifra, "disponibles de…", la gráfica y el porcentaje, centrados. Sin plan, rótulo, vencimiento ni horas. |
+| Solo la cifra | La cifra y la gráfica. |
+
+La gráfica se controla aparte con `chartStyle` (`none` la quita). Los avisos (`showNotices`) quedan encendidos en los tres diseños: solo aparecen cuando el widget no pudo actualizarse o hay una versión nueva. Si los apagas, el widget no te dirá que dejó de actualizarse.
 
 ### Temas incluidos
 

@@ -25,7 +25,8 @@
   const DEFAULTS = {
     ...pick(THEMES["attego-dark"]),
     chartStyle: "bar",
-    showPlanName: true,
+    showPlanName: true, showCarrier: true, showCaption: true, showPercent: true,
+    showExpiration: true, showReadingTime: true, showRunTime: true, showNotices: true,
     backgroundImageUrl: "",
     backgroundOverlayOpacity: 0.55,
     cacheMinutes: 30,
@@ -44,6 +45,25 @@
   function hex(value, fallback) {
     return typeof value === "string" && /^#?[0-9a-f]{6}$/i.test(value.trim())
       ? value.trim().replace(/^#/, "").toUpperCase() : fallback;
+  }
+
+  // Nombre corto en el enlace del widget → opción del script.
+  const SHOW_KEYS = { plan: "showPlanName", carrier: "showCarrier", caption: "showCaption", percent: "showPercent",
+    expires: "showExpiration", reading: "showReadingTime", run: "showRunTime", notices: "showNotices" };
+
+  // Diseños rápidos: qué elementos se ven.
+  const LAYOUTS = {
+    full: { label: "Completo", show: Object.keys(SHOW_KEYS) },
+    clean: { label: "Limpio", show: ["caption", "percent", "notices"] },
+    number: { label: "Solo la cifra", show: ["notices"] },
+  };
+
+  function layoutValues(id) {
+    return Object.fromEntries(Object.entries(SHOW_KEYS).map(([name, key]) => [key, LAYOUTS[id].show.includes(name)]));
+  }
+
+  function shown(value) {
+    return value !== false && value !== "false";
   }
 
   function oneOf(value, allowed, fallback) {
@@ -72,7 +92,7 @@
       chartStyle: oneOf(source.chartStyle, ["bar", "arc", "none"], DEFAULTS.chartStyle),
       barCorners: oneOf(source.barCorners, ["square", "round"], DEFAULTS.barCorners),
       font: oneOf(source.font, ["helvetica", "system"], DEFAULTS.font),
-      showPlanName: source.showPlanName !== false && source.showPlanName !== "false",
+      ...Object.fromEntries(Object.values(SHOW_KEYS).map(key => [key, shown(source[key])])),
       backgroundImageUrl: imageUrl(source.backgroundImageUrl),
       backgroundOverlayOpacity: Math.round(number(source.backgroundOverlayOpacity, 0, 1, DEFAULTS.backgroundOverlayOpacity) * 100) / 100,
       cacheMinutes: Math.round(number(source.cacheMinutes, 15, 720, DEFAULTS.cacheMinutes)),
@@ -90,6 +110,11 @@
     return Object.keys(THEMES).find(id => keys.every(key => THEMES[id][key] === s[key])) || "custom";
   }
 
+  function layoutOf(settings) {
+    const s = normalize(settings);
+    return Object.keys(LAYOUTS).find(id => Object.entries(layoutValues(id)).every(([key, value]) => s[key] === value)) || "custom";
+  }
+
   const COMMENTS = {
     backgroundHex: "Fondo.",
     textPrimaryHex: "Cifra y nombre del plan.",
@@ -98,7 +123,14 @@
     chartStyle: "bar, arc (semicírculo) o none.",
     barCorners: "square (recto) o round.",
     font: "helvetica o system (San Francisco).",
-    showPlanName: "false muestra solo el rótulo TELCEL.",
+    showPlanName: "Nombre del plan, arriba.",
+    showCarrier: "Rótulo TELCEL, arriba.",
+    showCaption: "\"disponibles de 7.0 GB\".",
+    showPercent: "\"77% utilizado\".",
+    showExpiration: "\"Vence 24 oct · en 5 días\".",
+    showReadingTime: "\"Dato de Telcel · fecha y hora\".",
+    showRunTime: "\"Revisado · fecha y hora\".",
+    showNotices: "Avisos de fallo y de nueva versión.",
     backgroundImageUrl: "Opcional: URL https de una imagen de fondo.",
     backgroundOverlayOpacity: "0 a 1. Capa del color de fondo sobre la imagen.",
     cacheMinutes: "Minutos que se reutiliza la última lectura.",
@@ -134,10 +166,14 @@
       try { values[decodeURIComponent(pair.slice(0, index))] = decodeURIComponent(pair.slice(index + 1)); } catch { /* Par ilegible: se ignora. */ }
     }
     if (!Object.keys(values).length) return null;
+    // Los widgets 1.0.0 solo mandan "plan"; desde 1.1.0 mandan la lista "show".
+    const visible = values.show === undefined ? { showPlanName: values.plan }
+      : Object.fromEntries(Object.entries(SHOW_KEYS).map(([name, key]) => [key, values.show.split(",").includes(name)]));
     return normalize({
+      ...visible,
       backgroundHex: values.bg, textPrimaryHex: values.primary, textSecondaryHex: values.secondary,
       accentHex: values.accent, chartStyle: values.chart, barCorners: values.corners, font: values.font,
-      showPlanName: values.plan, backgroundImageUrl: values.image, backgroundOverlayOpacity: values.overlay,
+      backgroundImageUrl: values.image, backgroundOverlayOpacity: values.overlay,
     });
   }
 
@@ -155,5 +191,5 @@
     return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
   }
 
-  return { THEMES, DEFAULTS, normalize, themeOf, settingsBlock, buildScript, fromHash, contrast, themeValues: id => pick(THEMES[id]) };
+  return { THEMES, LAYOUTS, SHOW_KEYS, layoutValues, layoutOf, DEFAULTS, normalize, themeOf, settingsBlock, buildScript, fromHash, contrast, themeValues: id => pick(THEMES[id]) };
 });

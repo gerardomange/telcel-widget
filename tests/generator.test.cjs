@@ -89,3 +89,27 @@ test("la página y el archivo de versión coinciden con el script", () => {
     assert.ok(html.includes(file) && fs.existsSync(path.join(ROOT, file)), file);
   }
 });
+
+test("diseños rápidos: Completo, Limpio y Solo la cifra", async () => {
+  assert.equal(G.layoutOf({}), "full");
+  const clean = G.normalize(G.layoutValues("clean"));
+  assert.equal(G.layoutOf(clean), "clean");
+  assert.deepEqual([clean.showPlanName, clean.showCarrier, clean.showExpiration, clean.showReadingTime, clean.showRunTime], [false, false, false, false, false]);
+  assert.deepEqual([clean.showCaption, clean.showPercent, clean.showNotices], [true, true, true]);
+  assert.equal(G.layoutOf({ ...clean, showCaption: false }), "custom");
+  const values = vm.runInNewContext(`${G.settingsBlock({ ...G.layoutValues("number"), useSampleData: true })}\nSETTINGS`);
+  const { hooks, state } = await loadWidget({ credentials: null, settings: JSON.parse(JSON.stringify(values)) });
+  await hooks.main();
+  assert.deepEqual(state.texts, ["1.6", "GB"]);
+});
+
+test("lo que se oculta viaja en el enlace del widget y los enlaces 1.0.0 siguen sirviendo", async () => {
+  const hidden = { showCarrier: false, showExpiration: false, showRunTime: false };
+  const { hooks } = await loadWidget({ settings: hidden });
+  const restored = G.fromHash(new URL(hooks.generatorURL()).hash);
+  for (const key of Object.values(G.SHOW_KEYS)) assert.equal(restored[key], hidden[key] !== false, key);
+  const old = G.fromHash("#bg=0F0F11&primary=E6E7E8&secondary=99999B&accent=9D7D5D&chart=bar&corners=square&font=helvetica&plan=false&image=&overlay=0.55");
+  assert.equal(old.showPlanName, false);
+  assert.equal(old.showCarrier, true);
+  assert.equal(old.showRunTime, true);
+});

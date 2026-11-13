@@ -258,3 +258,41 @@ test("una imagen que no es https se ignora", async () => {
   assert.equal(state.widgets[0].backgroundImage, undefined);
   assert.equal(state.requests.some(request => request.url.startsWith("http://")), false);
 });
+
+test("cada elemento se puede ocultar por separado", async () => {
+  const cases = {
+    showPlanName: "Amigo Sin Límite 200", showCarrier: "TELCEL", showCaption: "disponibles de 7.0 GB",
+    showPercent: "77% utilizado", showExpiration: "Vence 24 oct · en 5 días",
+    showReadingTime: "Dato de Telcel · 18/10 10:26",
+  };
+  for (const [key, text] of Object.entries(cases)) {
+    const { hooks, state } = await loadWidget({ settings: { [key]: false } });
+    hooks.createWidget({ data: hooks.parseUsage(homeResponse()) });
+    assert.equal(state.texts.includes(text), false, key);
+    for (const other of Object.values(cases)) if (other !== text) assert.ok(state.texts.includes(other), `${key}: ${other}`);
+    assert.ok(state.texts.includes("1.6"));
+  }
+  const { hooks, state } = await loadWidget({ settings: { showRunTime: false } });
+  hooks.createWidget({ data: hooks.parseUsage(homeResponse()) });
+  assert.equal(state.texts.some(text => text.startsWith("Revisado")), false);
+});
+
+test("con todo oculto queda solo la cifra y su unidad", async () => {
+  const hidden = { showPlanName: false, showCarrier: false, showCaption: false, showPercent: false,
+    showExpiration: false, showReadingTime: false, showRunTime: false, showNotices: false };
+  const { hooks, state } = await loadWidget({ settings: hidden });
+  hooks.createWidget({ data: hooks.parseUsage(homeResponse()), updateFailed: true, updateAvailable: true });
+  assert.deepEqual(state.texts, ["1.6", "GB"]);
+});
+
+test("los avisos se muestran aunque se oculten las horas, salvo que se apaguen", async () => {
+  const { hooks, state } = await loadWidget({ settings: { showReadingTime: false, showRunTime: false } });
+  hooks.createWidget({ data: hooks.parseUsage(homeResponse()), updateFailed: true });
+  assert.ok(state.texts.includes("No se pudo actualizar"));
+});
+
+test("sin cuenta y con todo oculto, el widget sigue pidiendo configurarla", async () => {
+  const { hooks, state } = await loadWidget({ credentials: null, settings: { showPlanName: false, showCarrier: false, showRunTime: false, showNotices: false } });
+  await hooks.main();
+  assert.deepEqual(state.texts, ["Configura tu cuenta", "Toca para abrir Scriptable"]);
+});
